@@ -33,6 +33,11 @@ db.serialize(() => {
 app.use(express.static('public'));
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Helper functions
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
