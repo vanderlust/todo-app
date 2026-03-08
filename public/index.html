@@ -25,30 +25,97 @@
       color: white;
       padding: 30px;
       text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .header h1 {
       font-size: 2em;
-      margin-bottom: 10px;
+    }
+    .logout-btn {
+      background: rgba(255,255,255,0.3);
+      border: 1px solid white;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.5);
     }
     .content {
       padding: 30px;
+    }
+    .auth-form {
+      display: none;
+    }
+    .auth-form.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: 500;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .auth-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .submit-btn {
+      background: #667eea;
+      color: white;
+    }
+    .submit-btn:hover {
+      background: #764ba2;
+    }
+    .toggle-btn {
+      background: #f0f0f0;
+      color: #666;
+    }
+    .toggle-btn:hover {
+      background: #e0e0e0;
+    }
+    .todos-section {
+      display: none;
+    }
+    .todos-section.active {
+      display: block;
     }
     .input-group {
       display: flex;
       gap: 10px;
       margin-bottom: 30px;
     }
-    input[type="text"] {
+    input[type="text"].todo-input {
       flex: 1;
-      padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 1em;
-      transition: border-color 0.3s;
-    }
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #667eea;
     }
     button {
       padding: 12px 30px;
@@ -72,7 +139,6 @@
       padding: 15px;
       border-bottom: 1px solid #f0f0f0;
       gap: 12px;
-      transition: background 0.2s;
     }
     .todo-item:hover {
       background: #f9f9f9;
@@ -103,27 +169,181 @@
       color: #999;
       padding: 40px 20px;
     }
+    .error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
+    <div class="header" id="header">
       <h1>📝 My Tasks</h1>
-      <p>Simple todo list - GitHub Actions Deployment Test</p>
+      <button class="logout-btn" id="logoutBtn" style="display: none;">Logout</button>
     </div>
+
     <div class="content">
-      <div class="input-group">
-        <input type="text" id="input" placeholder="Add a new task..." />
-        <button onclick="addTodo()">Add</button>
+      <!-- Auth Forms -->
+      <div id="authSection">
+        <div class="error" id="authError" style="display: none;"></div>
+
+        <div class="auth-form active" id="loginForm">
+          <h2>Login</h2>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="loginUsername" placeholder="Enter username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Enter password">
+          </div>
+          <div class="auth-buttons">
+            <button class="submit-btn" onclick="login()">Login</button>
+            <button class="toggle-btn" onclick="toggleAuth()">Create Account</button>
+          </div>
+        </div>
+
+        <div class="auth-form" id="registerForm">
+          <h2>Create Account</h2>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="registerUsername" placeholder="Choose a username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="registerPassword" placeholder="At least 6 characters">
+          </div>
+          <div class="auth-buttons">
+            <button class="submit-btn" onclick="register()">Sign Up</button>
+            <button class="toggle-btn" onclick="toggleAuth()">Back to Login</button>
+          </div>
+        </div>
       </div>
-      <ul class="todos" id="todos"></ul>
-      <div class="empty" id="empty" style="display: none;">No tasks yet. Add one to get started!</div>
+
+      <!-- Todos Section -->
+      <div id="todosSection" class="todos-section">
+        <div class="input-group">
+          <input type="text" id="input" class="todo-input" placeholder="Add a new task..." />
+          <button onclick="addTodo()">Add</button>
+        </div>
+        <ul class="todos" id="todos"></ul>
+        <div class="empty" id="empty" style="display: none;">No tasks yet. Add one to get started!</div>
+      </div>
     </div>
   </div>
 
   <script>
+    let token = localStorage.getItem('token');
+
+    function toggleAuth() {
+      document.getElementById('loginForm').classList.toggle('active');
+      document.getElementById('registerForm').classList.toggle('active');
+      clearAuthError();
+    }
+
+    function showAuthError(msg) {
+      const errorEl = document.getElementById('authError');
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+
+    function clearAuthError() {
+      document.getElementById('authError').style.display = 'none';
+    }
+
+    async function login() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!username || !password) {
+        showAuthError('Please enter username and password');
+        return;
+      }
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAuthError(data.error || 'Login failed');
+        return;
+      }
+
+      token = data.token;
+      localStorage.setItem('token', token);
+      showTodosSection();
+      loadTodos();
+    }
+
+    async function register() {
+      const username = document.getElementById('registerUsername').value.trim();
+      const password = document.getElementById('registerPassword').value;
+
+      if (!username || !password) {
+        showAuthError('Please enter username and password');
+        return;
+      }
+
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAuthError(data.error || 'Registration failed');
+        return;
+      }
+
+      token = data.token;
+      localStorage.setItem('token', token);
+      showTodosSection();
+      loadTodos();
+    }
+
+    function logout() {
+      token = null;
+      localStorage.removeItem('token');
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('registerUsername').value = '';
+      document.getElementById('registerPassword').value = '';
+      showAuthSection();
+    }
+
+    function showAuthSection() {
+      document.getElementById('authSection').style.display = 'block';
+      document.getElementById('todosSection').classList.remove('active');
+      document.getElementById('logoutBtn').style.display = 'none';
+    }
+
+    function showTodosSection() {
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('todosSection').classList.add('active');
+      document.getElementById('logoutBtn').style.display = 'block';
+    }
+
     async function loadTodos() {
-      const res = await fetch('/api/todos');
+      if (!token) return;
+
+      const res = await fetch('/api/todos', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        logout();
+        return;
+      }
+
       const todos = await res.json();
       const list = document.getElementById('todos');
       const empty = document.getElementById('empty');
@@ -153,23 +373,37 @@
       const title = input.value.trim();
       if (!title) return;
 
-      await fetch('/api/todos', {
+      const res = await fetch('/api/todos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ title })
       });
+
+      if (!res.ok) {
+        logout();
+        return;
+      }
 
       input.value = '';
       loadTodos();
     }
 
     async function toggleTodo(id) {
-      await fetch(`/api/todos/${id}`, { method: 'PATCH' });
+      await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       loadTodos();
     }
 
     async function deleteTodo(id) {
-      await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      await fetch(`/api/todos/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       loadTodos();
     }
 
@@ -183,7 +417,15 @@
       if (e.key === 'Enter') addTodo();
     });
 
-    loadTodos();
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // Initialize
+    if (token) {
+      showTodosSection();
+      loadTodos();
+    } else {
+      showAuthSection();
+    }
   </script>
 </body>
 </html>

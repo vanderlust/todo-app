@@ -1,0 +1,141 @@
+================================================================================
+GITHUB ACTIONS + DOKPLOY DEPLOYMENT - TODO APP READY FOR TESTING
+================================================================================
+
+PROJECT STRUCTURE:
+  ~/devel/todo-app/
+  ├── app.js                    ✓ Express server
+  ├── Dockerfile               ✓ Docker image
+  ├── docker-compose.yml       ✓ Dokploy config
+  ├── package.json             ✓ Dependencies
+  ├── public/index.html        ✓ Frontend
+  ├── .github/workflows/
+  │   └── deploy.yml           ✓ GitHub Actions workflow
+  ├── .git/                    ✓ Git repo initialized
+  ├── .gitignore               ✓ Git ignore rules
+  ├── README.md                ✓ Documentation
+  └── GITHUB_SETUP.md          ✓ Setup instructions
+
+GIT STATUS:
+  ✓ Repository initialized
+  ✓ All files committed
+  ✓ Ready to push to GitHub
+
+SERVER INFRASTRUCTURE:
+  ✓ Dokploy server at 158.180.51.246
+  ✓ dokploy-deploy script installed at /usr/local/bin/dokploy-deploy
+  ✓ Traefik routing configured
+  ✓ Let's Encrypt SSL ready
+  ✓ tasks.cessmedia.com reserved for todo app
+
+WHAT YOU NEED TO DO:
+
+1. Generate SSH Key
+   $ cd ~/devel/todo-app
+   $ ssh-keygen -t ed25519 -f github-actions-key -N ""
+
+2. Add Public Key to Server
+   $ cat github-actions-key.pub | ssh ubuntu@158.180.51.246 'cat >> ~/.ssh/authorized_keys'
+
+3. Create GitHub Repository
+   https://github.com/new
+   Name: todo-app
+   Make it: Public
+   Click: Create repository
+
+4. Add GitHub Secrets (Settings → Secrets and variables → Actions)
+   DOKPLOY_HOST = 158.180.51.246
+   DOKPLOY_USER = ubuntu
+   DOKPLOY_SSH_KEY = (content of github-actions-key private key)
+   DOKPLOY_APP_NAME = todo-app
+
+5. Push to GitHub
+   $ git remote add origin https://github.com/YOUR_USERNAME/todo-app.git
+   $ git branch -M main
+   $ git push -u origin main
+
+6. Watch GitHub Actions
+   - Go to Actions tab in your repo
+   - See workflow building and deploying
+   - Check for any errors in logs
+
+7. Access the App
+   https://tasks.cessmedia.com
+
+WORKFLOW DETAILS:
+
+On each git push to main:
+  1. GitHub Actions triggers
+  2. Checks out your code
+  3. Builds Docker image
+  4. Pushes to ghcr.io (GitHub Container Registry)
+  5. SSHes into 158.180.51.246
+  6. Runs dokploy-deploy script
+  7. Script pulls new image
+  8. Script restarts container via docker-compose
+  9. Live in 30-60 seconds
+
+EXPECTED TIMING:
+  Checkout code:        2s
+  Docker setup:         5s
+  Build image:          20-30s
+  Push to registry:     10-20s
+  SSH deploy:           5-10s
+  Container restart:    5s
+  TOTAL:                ~1 minute
+
+USEFUL COMMANDS AFTER SETUP:
+
+# Test SSH key
+$ ssh -i github-actions-key ubuntu@158.180.51.246 'echo ok'
+
+# Check deployment status
+$ ssh ubuntu@158.180.51.246 'sudo docker ps | grep todo'
+
+# View container logs
+$ ssh ubuntu@158.180.51.246 'sudo docker logs container-id'
+
+# Manual trigger (for testing)
+$ gh workflow run deploy.yml -f branch=main
+
+# Check GitHub Actions logs
+$ gh run list --repo your-username/todo-app
+
+SECURITY:
+
+✓ SSH key in /Users/michael/devel/todo-app/github-actions-key (local only)
+✓ Never commit private key to GitHub
+✓ Already in .gitignore
+✓ Private key stays only in GitHub Secrets
+✓ No passwords in workflow
+✓ Limited to ubuntu user on server
+✓ SSH key is ed25519 (modern, secure)
+
+TESTING CHECKLIST:
+
+□ SSH key generated
+□ Public key added to server
+□ Can SSH: ssh -i github-actions-key ubuntu@158.180.51.246 'echo ok'
+□ GitHub repo created and is PUBLIC
+□ 4 GitHub secrets added
+□ Code pushed: git push -u origin main
+□ GitHub Actions starts running
+□ All steps complete successfully
+□ Container running on server
+□ App loads at https://tasks.cessmedia.com
+□ Made code change, pushed, verified auto-deployment
+
+NEXT STEPS:
+
+1. Generate SSH key
+2. Configure GitHub repo
+3. Push code
+4. Watch Actions
+5. Access https://tasks.cessmedia.com
+6. Test by making code changes
+
+SUCCESS = Auto-deployment works! 🎉
+
+Questions? Check GITHUB_SETUP.md for detailed instructions and troubleshooting.
+
+================================================================================
