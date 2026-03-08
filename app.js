@@ -38,6 +38,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// App info endpoint
+app.get('/api/info', (req, res) => {
+  res.json({
+    app: 'todo-app',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    lastDeployed: new Date(2026, 2, 8, 14, 30, 0).toISOString()
+  });
+});
+
 // Helper functions
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
